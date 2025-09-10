@@ -1,16 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using Game.Systems;           // ✅ ObjectPool<T> 인식
-using Game.Combat.Bullet;    // ✅ BulletHitPierce 인식 (BulletHitPierce.cs 네임스페이스 맞을 때만)
 
-public class WeaponController : MonoBehaviour
+/// <summary>
+/// 플레이어 무기 컨트롤러.
+/// 무기별 발사 로직(SingleShot, Shotgun, Orbit)을 처리.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class WeaponController : MonoBehaviour
 {
+    [Header("플레이어 Transform")]
+    [Tooltip("총알 발사 위치 기준이 될 Transform")]
     public Transform player;
-    [SerializeField] private BulletPoolManager bulletPoolManager; // ✅ BulletPoolManager 참조
 
+    [Header("총알 풀")]
+    [Tooltip("발사할 BulletHitPierce 풀")]
+    public ObjectPool<BulletHitPierce> bulletPool;
+
+    [Header("데미지 배수 (패시브 연동)")]
     public float damageMul = 1f;
+
     public List<WeaponInstance> weapons = new List<WeaponInstance>();
-    float orbitAngle;
+    private float orbitAngle;
 
     void Update()
     {
@@ -81,31 +91,27 @@ public class WeaponController : MonoBehaviour
             SpawnBullet(player.position + offset, dir, inst);
         }
     }
+
     void SpawnBullet(Vector3 pos, Vector3 dir, WeaponInstance inst)
     {
-        if (bulletPoolManager == null || bulletPoolManager.Pool == null) return;
+        BulletHitPierce go = bulletPool.Get();
+        if (go == null) return;
 
-        BulletHitPierce bullet = bulletPoolManager.Pool.Get();
-        if (bullet == null) return;
+        go.transform.position = pos;
+        go.transform.rotation = Quaternion.identity;
 
-        bullet.gameObject.SetActive(true); // ✅ 먼저 활성화
-
-        bullet.transform.position = pos;
-        bullet.transform.rotation = Quaternion.identity;
-
-        var rb = bullet.GetComponent<Rigidbody2D>();
-        if (!rb) rb = bullet.gameObject.AddComponent<Rigidbody2D>();
+        var rb = go.GetComponent<Rigidbody2D>();
+        if (!rb) rb = go.gameObject.AddComponent<Rigidbody2D>();
         rb.gravityScale = 0f;
-        rb.bodyType = RigidbodyType2D.Dynamic;  // ✅ 움직이도록 보장
-        rb.velocity = dir.normalized * inst.Speed();  // ✅ 방향 정상화
+        rb.velocity = dir * inst.Speed();
 
-        // 총알 데이터 초기화
-        bullet.damage = Mathf.CeilToInt(inst.Damage(damageMul));
-        bullet.pierce = inst.Pierce();
-        bullet.splashRadius = inst.SplashRadius();
-        bullet.splashRatio = inst.SplashRatio();
+        go.damage = Mathf.CeilToInt(inst.Damage(damageMul));
+        go.pierce = inst.Pierce();
+        go.splashRadius = inst.SplashRadius();
+        go.splashRatio = inst.SplashRatio();
+
+        go.gameObject.SetActive(true);
     }
-
 
     Transform FindNearestEnemy(float range)
     {

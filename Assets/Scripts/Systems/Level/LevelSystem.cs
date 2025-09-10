@@ -1,12 +1,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 플레이어의 경험치, 레벨업 시스템을 관리.
+/// PassiveInventory의 ExpGain 패시브와 연동.
+/// </summary>
+[DisallowMultipleComponent]
 public class LevelSystem : MonoBehaviour
 {
+    [Header("경험치 및 레벨")]
+    [Tooltip("현재 레벨")]
     public int level = 1;
+
+    [Tooltip("현재 경험치")]
     public int curExp = 0;
+
+    [Tooltip("다음 레벨까지 필요한 경험치")]
     public int nextExp = 5;
 
+    [Header("경험치 획득 배수 (패시브 연동)")]
+    [Tooltip("경험치 획득 배수")]
     public float expGainMul = 1f;
 
     public List<WeaponData> allWeapons;

@@ -4,10 +4,13 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.UI;
 
+/// <summary>
+/// 게임 중 성능과 웨이브, 경험치 배수 등을 표시하는 HUD.
+/// </summary>
 [DisallowMultipleComponent]
 public sealed class PerfHUD : MonoBehaviour
 {
-    [Header("Texts")]
+    [Header("UI 요소")]
     public Text fpsText;
     public Text memText;
     public Text waveText;

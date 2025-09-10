@@ -1,57 +1,48 @@
-using UnityEngine;
+﻿using UnityEngine;
 
+/// <summary>
+/// WeaponData의 인스턴스화 — 현재 레벨/쿨다운 등을 관리.
+/// </summary>
+[System.Serializable]
 public class WeaponInstance
 {
     public WeaponData data;
-    public int level;
-    public float lastFireTime;
+    public int level = 1;
+    public float lastFireTime = -999f;
 
-    public WeaponInstance(WeaponData d)
+    public WeaponInstance(WeaponData data)
     {
-        data = d;
-        level = 1;
-        lastFireTime = -999f;
-    }
-
-    public float Damage(float mul = 1f)
-    {
-        return data.baseDamage * (1f + 0.2f * (level - 1)) * mul;
-    }
-
-    public float Speed()
-    {
-        return data.baseSpeed;
-    }
-
-    public int ProjectileCount()
-    {
-        return 1 + (level / 3);
-    }
-
-    public int Pierce()
-    {
-        if (data.piercePerLevel == null || data.piercePerLevel.Length == 0) return 1;
-        int i = Mathf.Clamp(level - 1, 0, data.piercePerLevel.Length - 1);
-        return Mathf.Max(1, data.piercePerLevel[i]);
-    }
-
-    public float SplashRadius()
-    {
-        if (data.splashRadiusPerLevel == null || data.splashRadiusPerLevel.Length == 0) return 0f;
-        int i = Mathf.Clamp(level - 1, 0, data.splashRadiusPerLevel.Length - 1);
-        return Mathf.Max(0f, data.splashRadiusPerLevel[i]);
-    }
-
-    public float SplashRatio()
-    {
-        if (data.splashRatioPerLevel == null || data.splashRatioPerLevel.Length == 0) return 0f;
-        int i = Mathf.Clamp(level - 1, 0, data.splashRatioPerLevel.Length - 1);
-        return Mathf.Clamp01(data.splashRatioPerLevel[i]);
+        this.data = data;
+        this.level = 1;
     }
 
     public float Cooldown()
     {
-        float rate = data.baseFireRate * (1f + 0.05f * (level - 1));
-        return 1f / Mathf.Max(0.01f, rate);
+        return 1f / (data.fireRate * SpeedMul());
     }
+
+    public float Damage(float globalMul)
+    {
+        return data.baseDamage * DamageMul() * globalMul;
+    }
+
+    float DamageMul()
+    {
+        if (data.damageMultipliers != null && data.damageMultipliers.Length >= level)
+            return data.damageMultipliers[level - 1];
+        return 1f;
+    }
+
+    float SpeedMul()
+    {
+        if (data.speedMultipliers != null && data.speedMultipliers.Length >= level)
+            return data.speedMultipliers[level - 1];
+        return 1f;
+    }
+
+    public float Speed() => data.range; // 발사 속도 대신 이동 속도로 쓰던 부분
+    public int Pierce() => 1;
+    public float SplashRadius() => 0f;
+    public float SplashRatio() => 0f;
+    public int ProjectileCount() => Mathf.Min(5, level);
 }

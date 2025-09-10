@@ -1,9 +1,11 @@
-﻿using Game.Enemies.Runtime;
+﻿using UnityEngine;
 using System.Collections;
-using UnityEngine;
 
-
-public class WaveManager : MonoBehaviour
+/// <summary>
+/// 웨이브 스폰 및 경험치 배수를 관리.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class WaveManager : MonoBehaviour
 {
     public Transform player;
     public float radius = 12f;
@@ -13,11 +15,10 @@ public class WaveManager : MonoBehaviour
     public SpawnTable table;
 
     int waveIndex = 0;
-
     public static int CurrentWave { get; private set; }
     public static float ExpMultiplier { get; private set; }
 
-    void Start() { StartCoroutine(Run()); }
+    void Start() => StartCoroutine(Run());
 
     IEnumerator Run()
     {
@@ -26,8 +27,8 @@ public class WaveManager : MonoBehaviour
             waveIndex++;
             CurrentWave = waveIndex;
             ExpMultiplier = Mathf.Pow(1.5f, waveIndex / 10);
-
             if (hud) hud.SetWave(waveIndex);
+            if (hud) hud.SetExpMultiplier(ExpMultiplier);
 
             int targetCount = CalcWaveCount(waveIndex);
             int spawned = 0;
@@ -35,7 +36,6 @@ public class WaveManager : MonoBehaviour
             while (spawned < targetCount)
             {
                 while ((EnemyCounter.I?.Alive ?? 0) >= config.maxAlive) yield return null;
-
                 int batch = Mathf.Min(config.spawnBatch, targetCount - spawned);
                 for (int i = 0; i < batch; i++)
                 {
@@ -56,12 +56,10 @@ public class WaveManager : MonoBehaviour
                     spawned++;
                     if (spawned >= targetCount) break;
                 }
-
                 float s = config.intervalScale?.Evaluate(waveIndex) ?? 1f;
                 float interval = Mathf.Max(0.05f, config.baseInterval * s);
                 yield return new WaitForSeconds(config.batchInterval > 0f ? config.batchInterval : interval);
             }
-
             yield return new WaitForSeconds(waveDelay);
         }
     }
@@ -69,14 +67,11 @@ public class WaveManager : MonoBehaviour
     int CalcWaveCount(int wave)
     {
         if (wave <= 1) return Mathf.Max(1, config.baseCount);
-
         int prev = wave - 1;
         int evenCount = prev / 2;
         int oddCount = prev - evenCount;
-
         int inc = oddCount * config.perWaveIncOdd + evenCount * config.perWaveIncEven;
         int bonus10 = (wave / 10) * config.bonusPer10;
-
         int count = config.baseCount + inc + bonus10;
         return Mathf.Max(1, count);
     }
@@ -84,7 +79,6 @@ public class WaveManager : MonoBehaviour
     EnemyData PickEnemyData(int wave)
     {
         if (wave < 5) return table.normal;
-
         if (wave < 10)
         {
             float rn = table.ratioNormal?.Evaluate(wave) ?? 1f;

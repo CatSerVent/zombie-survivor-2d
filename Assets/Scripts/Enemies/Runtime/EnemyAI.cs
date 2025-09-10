@@ -1,22 +1,28 @@
 using UnityEngine;
 
-public class EnemyAI : MonoBehaviour
+/// <summary>
+/// 플레이어를 향해 이동하는 간단한 AI.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class EnemyAI : MonoBehaviour
 {
-    public float speed = 2.8f;
-    Transform player;
+    [Header("속도")]
+    [Tooltip("기본 이동 속도")]
+    public float speed = 2f;
 
-    public void SetupSpeed(float s) { speed = s; }
+    private Transform player;
+
+    public void SetupSpeed(float s) => speed = s;
 
     void Start()
     {
         var p = GameObject.FindGameObjectWithTag("Player");
-        if (p != null) player = p.transform;
+        if (p) player = p.transform;
     }
 
     void Update()
     {
-        if (player == null) return;
-        Vector3 dir = (player.position - transform.position).normalized;
-        transform.position += dir * speed * Time.deltaTime;
+        if (!player) return;
+        transform.position = Vector3.MoveTowards(transform.position, player.position, speed * Time.deltaTime);
     }
 }

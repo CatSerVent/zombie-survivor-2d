@@ -1,41 +1,48 @@
 ﻿using UnityEngine;
-using Game.Systems;
 
-namespace Game.Combat.Bullet
+/// <summary>
+/// BulletHit 이펙트 전용 풀 매니저.
+/// BulletHit 이펙트 프리팹을 풀에서 꺼내 사용.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class HitPoolManager : MonoBehaviour
 {
-    [DisallowMultipleComponent]
-    public sealed class HitPoolManager : MonoBehaviour
+    public static HitPoolManager I;
+
+    [Header("Prefab")]
+    [Tooltip("히트 이펙트 프리팹 (PooledObject 포함)")]
+    [SerializeField] private BulletHit hitPrefab;
+
+    [Header("Pool Settings")]
+    [Tooltip("시작 시 미리 생성할 개수")]
+    [SerializeField] private int initialCapacity = 30;
+
+    [Tooltip("풀 최대 크기")]
+    [SerializeField] private int maxSize = 100;
+
+    private ObjectPool<BulletHit> hitPool;
+
+    void Awake()
     {
-        public static HitPoolManager I;
-
-        [Header("Prefab")]
-        [SerializeField] private BulletHit hitPrefab;   // ✅ 다시 BulletHit
-
-        [Header("Pool Settings")]
-        [SerializeField] private int initialCapacity = 30;
-        [SerializeField] private int maxSize = 100;
-
-        private ObjectPool<BulletHit> hitPool;
-
-        private void Awake()
-        {
-            I = this;
-            hitPool = new ObjectPool<BulletHit>(hitPrefab, initialCapacity, maxSize, this.transform);
-        }
-
-        public BulletHit Get(Vector3 pos, Sprite enemySprite)
-        {
-            var inst = hitPool.Get();
-            if (inst == null) return null;
-
-            inst.Setup(enemySprite, pos);
-            return inst;
-        }
-
-        public void Release(BulletHit hit)
-        {
-            if (hit == null) return;
-            hitPool.Release(hit);
-        }
+        I = this;
+        hitPool = new ObjectPool<BulletHit>(hitPrefab, initialCapacity, maxSize, transform);
     }
+
+    public BulletHit Get(Vector3 position, Quaternion rotation)
+    {
+        var inst = hitPool.Get();
+        if (inst == null) return null;
+        inst.transform.SetParent(null);
+        inst.transform.SetPositionAndRotation(position, rotation);
+        inst.gameObject.SetActive(true);
+        return inst;
+    }
+
+    public void Release(BulletHit hit)
+    {
+        if (hit == null) return;
+        hitPool.Release(hit);
+    }
+
+    public int CountInactive => hitPool.CountInactive;
 }

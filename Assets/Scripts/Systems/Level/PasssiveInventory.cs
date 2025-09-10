@@ -1,13 +1,20 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 
-public class PassiveInventory : MonoBehaviour
+/// <summary>
+/// 패시브 아이템(이동속도, 데미지, 경험치, 자석)을 관리.
+/// 레벨업 시 각 패시브의 수치를 적용.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class PassiveInventory : MonoBehaviour
 {
+    [Header("연결 컴포넌트")]
     public PlayerController player;
     public LevelSystem levelSys;
     public WeaponController weapons;
     public PlayerExpCollector collector;
 
+    // 타입별 현재 레벨 저장
     private Dictionary<PassiveType, int> levels = new Dictionary<PassiveType, int>()
     {
         { PassiveType.MoveSpeed, 0 },
@@ -16,6 +23,7 @@ public class PassiveInventory : MonoBehaviour
         { PassiveType.Magnet,    0 },
     };
 
+    // 타입별 현재 적용된 value 기록
     private Dictionary<PassiveType, float> appliedValues = new Dictionary<PassiveType, float>()
     {
         { PassiveType.MoveSpeed, 0f },
@@ -24,10 +32,8 @@ public class PassiveInventory : MonoBehaviour
         { PassiveType.Magnet,    0f },
     };
 
-    public int GetLevel(PassiveType type)
-    {
-        return levels.TryGetValue(type, out var lv) ? lv : 0;
-    }
+    public int GetLevel(PassiveType type) =>
+        levels.TryGetValue(type, out var lv) ? lv : 0;
 
     public bool IsMax(PassiveData p)
     {
@@ -38,12 +44,10 @@ public class PassiveInventory : MonoBehaviour
     public void Apply(PassiveData p)
     {
         if (p == null) return;
-
         int curLevel = GetLevel(p.type);
         if (curLevel >= p.maxLevel) return;
 
         int newLevel = curLevel + 1;
-
         float oldV = appliedValues[p.type];
         float newV = 0f;
         if (p.values != null && p.values.Length > 0)
@@ -51,7 +55,6 @@ public class PassiveInventory : MonoBehaviour
             int idx = Mathf.Clamp(newLevel - 1, 0, p.values.Length - 1);
             newV = p.values[idx];
         }
-
         float deltaMul = (1f + newV) / Mathf.Max(1f + oldV, 1e-6f);
 
         switch (p.type)
@@ -66,7 +69,7 @@ public class PassiveInventory : MonoBehaviour
                 if (levelSys != null) levelSys.expGainMul *= deltaMul;
                 break;
             case PassiveType.Magnet:
-                if (collector != null) collector.magnetMul *= deltaMul;
+                if (collector != null) collector.SetMagnetMultiplier(1f + newV);
                 break;
         }
 

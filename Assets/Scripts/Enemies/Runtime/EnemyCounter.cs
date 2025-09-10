@@ -1,25 +1,27 @@
+using System.Collections.Generic;
 using UnityEngine;
-using System;
 
-public class EnemyCounter : MonoBehaviour
+/// <summary>
+/// 현재 살아있는 Enemy 수를 추적.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class EnemyCounter : MonoBehaviour
 {
     public static EnemyCounter I;
-    public int Alive { get; private set; }
-    public Action<int> OnAliveChanged;
 
-    private void Awake() {I = this;Alive = 0;}
+    private HashSet<Enemy> enemies = new HashSet<Enemy>();
 
-    public static void Add()
+    void Awake() => I = this;
+
+    public int Alive => enemies.Count;
+
+    public void Add(Enemy e)
     {
-        if (I == null) return;
-        I.Alive++;
-        I.OnAliveChanged?.Invoke(I.Alive);
+        if (e != null) enemies.Add(e);
     }
 
-    public static void Remove()
+    public void Remove(Enemy e)
     {
-        if(I==null) return;
-        I.Alive = Mathf.Max(0, I.Alive - 1);
-        I.OnAliveChanged?.Invoke(I.Alive);
+        if (e != null) enemies.Remove(e);
     }
 }

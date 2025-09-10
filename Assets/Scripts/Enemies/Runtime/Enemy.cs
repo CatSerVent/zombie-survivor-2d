@@ -1,43 +1,54 @@
-﻿using Game.Combat.Bullet;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Game.Enemies.Runtime
+/// <summary>
+/// 적 유닛의 HP와 피해 처리, 사망 시 경험치 오브 생성.
+/// </summary>
+[DisallowMultipleComponent]
+public sealed class Enemy : MonoBehaviour
 {
-    public class Enemy : MonoBehaviour
+    [Header("HP 설정")]
+    [Tooltip("최대 HP")]
+    public int maxHp = 10;
+
+    private int hp;
+
+    void OnEnable()
     {
-        [SerializeField] private int hp = 10;
+        hp = maxHp;
+        EnemyCounter.I?.Add(this);
+    }
 
-        public void Setup(int hp) => this.hp = hp;
+    public void Setup(int hpValue)
+    {
+        maxHp = hpValue;
+        hp = maxHp;
+    }
 
-        public void TakeDamage(int dmg, Vector3 hitPos)
+    public void TakeDamage(int dmg, Vector3 hitPos)
+    {
+        hp -= dmg;
+        if (hp <= 0)
         {
-            hp -= dmg;
+            Die(hitPos);
+        }
+    }
 
-            // ✅ 무조건 이펙트 생성
-            if (HitPoolManager.I != null)
-            {
-                var sr = GetComponent<SpriteRenderer>();
-                if (sr != null)
-                {
-                    HitPoolManager.I.Get(hitPos, sr.sprite);
-                }
-            }
+    void Die(Vector3 pos)
+    {
+        EnemyCounter.I?.Remove(this);
 
-            if (hp <= 0)
-            {
-                Die();
-            }
+        // 경험치 오브 생성
+        var orb = ExpOrbPool.I?.Get(transform.position);
+        if (orb != null)
+        {
+            orb.value = 1; // 경험치 값 지정
         }
 
-        private void Die()
-        {
-            if (ExpOrbPoolManager.I != null)
-            {
-                ExpOrbPoolManager.I.Spawn(1, transform.position); // 경험치 값 1 (혹은 expValue 변수)
-            }
+        gameObject.SetActive(false);
+    }
 
-            Destroy(gameObject);
-        }
-
+    void OnDisable()
+    {
+        EnemyCounter.I?.Remove(this);
     }
 }

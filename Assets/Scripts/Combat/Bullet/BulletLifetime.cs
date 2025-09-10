@@ -1,23 +1,22 @@
 ﻿using UnityEngine;
-using Game.Systems; // ✅ PooledObject 정의된 네임스페이스
 
+/// <summary>
+/// 총알이 일정 시간 후 자동으로 풀로 반환되도록 하는 컴포넌트.
+/// </summary>
 [DisallowMultipleComponent]
 public sealed class BulletLifetime : MonoBehaviour
 {
-    [Tooltip("총알의 생존 시간 (초)")]
+    [Header("수명 설정")]
+    [Tooltip("총알이 유지되는 시간(초)")]
     public float life = 2f;
 
     private float t;
     private PooledObject p;
 
-    void Awake()
-    {
-        p = GetComponent<PooledObject>();
-    }
-
     void OnEnable()
     {
         t = 0f;
+        if (!p) p = GetComponent<PooledObject>();
     }
 
     void Update()

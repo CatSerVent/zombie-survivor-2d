@@ -1,26 +1,35 @@
-﻿using Game.Enemies.Runtime;
-using Game.Systems;
+﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
+/// <summary>
+/// 관통/스플래시를 지원하는 총알 히트 처리.
+/// Enemy에 데미지를 주고, pierce 횟수 소모 후 풀로 반환.
+/// </summary>
 [DisallowMultipleComponent]
 public sealed class BulletHitPierce : MonoBehaviour
 {
+    [Header("피해 및 관통 설정")]
+    [Tooltip("이 총알이 주는 피해")]
     public int damage = 1;
-    public int pierce = 1;
-    public float splashRadius = 0f;
-    public float splashRatio = 0f;
 
-    [SerializeField] private float lifeTime = 5f;
+    [Tooltip("관통 가능한 횟수")]
+    public int pierce = 1;
+
+    [Header("스플래시 설정")]
+    [Tooltip("스플래시 반경 (0이면 없음)")]
+    public float splashRadius = 0f;
+
+    [Tooltip("스플래시 비율 (0이면 없음)")]
+    public float splashRatio = 0f;
 
     private PooledObject p;
     private Collider2D col;
     private bool returned;
-    private float spawnTime;
-
     private readonly HashSet<int> hitIds = new HashSet<int>();
-    private static readonly Collider2D[] tmp = new Collider2D[16];
-    private static int enemyMask = -1;
+
+    static readonly Collider2D[] tmp = new Collider2D[16];
+    static int enemyMask = -1;
 
     void Awake()
     {
@@ -28,30 +37,21 @@ public sealed class BulletHitPierce : MonoBehaviour
         col = GetComponent<Collider2D>();
     }
 
+    void Start()
+    {
+        if (enemyMask == -1) enemyMask = LayerMask.GetMask("Enemy");
+    }
+
     void OnEnable()
     {
-        // ✅ 매번 초기화
         returned = false;
         hitIds.Clear();
         if (col) col.enabled = true;
-        spawnTime = Time.time;
-
-        if (enemyMask == -1)
-            enemyMask = LayerMask.GetMask("Enemy");
-    }
-
-    void Update()
-    {
-        if (!returned && Time.time - spawnTime > lifeTime)
-        {
-            ReturnToPool();
-        }
     }
 
     void OnTriggerEnter2D(Collider2D other)
     {
         if (returned) return;
-
         var e = other.GetComponent<Enemy>();
         if (e == null) return;
 
@@ -67,25 +67,22 @@ public sealed class BulletHitPierce : MonoBehaviour
             for (int i = 0; i < n; i++)
             {
                 var ex = tmp[i].GetComponent<Enemy>();
-                if (ex != null && ex != e)
-                    ex.TakeDamage(Mathf.CeilToInt(damage * splashRatio), transform.position);
+                if (ex != null && ex != e) ex.TakeDamage(Mathf.CeilToInt(damage * splashRatio), transform.position);
             }
         }
 
         pierce--;
         if (pierce <= 0)
         {
-            ReturnToPool();
+            returned = true;
+            if (col) col.enabled = false;
+            StartCoroutine(ReturnNextFrame());
         }
     }
 
-    private void ReturnToPool()
+    IEnumerator ReturnNextFrame()
     {
-        if (returned) return;
-        returned = true;
-
-        if (col) col.enabled = false;
-
+        yield return null;
         if (p != null) p.Return();
         else gameObject.SetActive(false);
     }
