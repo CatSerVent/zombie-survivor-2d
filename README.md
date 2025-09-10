@@ -32,13 +32,13 @@
 
 ## 🖼️ 스크린샷
 
-### 그래픽 설정
+### 레벨업 UI
 ![Graphics](./Docs/Screenshot_Graphics.png)
 
-### 인게임 및 HUD
+### 그래픽 설정
 ![Gameplay](./Docs/Screenshot_Gameplay.png)
 
-### 레벨업 UI
+### 인게임 및 HUD
 ![LevelUp](./Docs/Screenshot_LevelUp.png)
 
 ---
