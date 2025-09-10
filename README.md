@@ -35,10 +35,10 @@
 ### 레벨업 UI
 ![Graphics](./Docs/Screenshot_Graphics.png)
 
-### 그래픽 설정
+### 인게임 및 HUD
 ![Gameplay](./Docs/Screenshot_Gameplay.png)
 
-### 인게임 및 HUD
+### 그래픽 설정
 ![LevelUp](./Docs/Screenshot_LevelUp.png)
 
 ---
